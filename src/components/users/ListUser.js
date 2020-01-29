@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import axios from 'axios';
-import ApiService from '../../service/ApiService';
+import React, { Fragment, useContext } from 'react';
+import UserContext from '../../context/users/userContext';
+
 import {
   Table,
   TableBody,
@@ -9,21 +9,33 @@ import {
   TableRow,
   Button,
   Checkbox,
-  Card
+  Card,
+  TableContainer,
+  Paper,
+  Avatar,
+  Dialog,
+  DialogContentText,
+  DialogActions,
+  TextField,
+  DialogTitle,
+  DialogContent
 } from '@material-ui/core';
 import Animate from '../../ThemeComponents/Animate';
 import { blueGrey } from '@material-ui/core/colors';
-import CreateIcon from '@material-ui/icons/Create';
-import DeleteIcon from '@material-ui/icons/Delete';
+import { Create, Delete, Visibility } from '@material-ui/icons';
 import Typography from '@material-ui/core/Typography';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/styles';
+
 const useStyles = makeStyles(theme => ({
   root: {
     background: `${blueGrey[900]}`
   },
   divider: {
     backgroundColor: 'white'
+  },
+  container: {
+    maxHeight: 800
   }
 }));
 
@@ -54,68 +66,60 @@ const ListUserComponent = props => {
   const classes = useStyles();
   const [message, setMessage] = React.useState(null);
   const [isLoading, setLoading] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
-  const Fetch = () => {
-    const [users, setUsers] = React.useState([]);
+  const userContext = useContext(UserContext);
+  const { users } = userContext;
 
-    React.useEffect(() => {
-      const fetchData = async () => {
-        try {
-          let res = await fetch('https://randomuser.me/api/?results=50'); // sample
-          let data = await res.json();
-          setUsers(data.results); // parse json
-        } catch (error) {
-          console.log(error);
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, []);
-    return users;
+  // const Fetch = () => {
+  //   const [users, setUsers] = React.useState([]);
+
+  //   React.useEffect(() => {
+  //     const fetchData = async () => {
+  //       try {
+  //         let res = await fetch('https://randomuser.me/api/?results=5'); // sample
+  //         let data = await res.json();
+  //         setUsers(data.results); // parse json
+  //       } catch (error) {
+  //         console.log(error);
+  //         setLoading(false);
+  //       }
+  //     };
+  //     fetchData();
+  //   }, []);
+  //   return users;
+  // };
+
+  // const users = Fetch();
+  const handleClickOpen = () => {
+    setOpen(true);
   };
 
-  const users = Fetch();
-
-  function deleteUser(userId) {
-    ApiService.deleteUser(userId).then(res => {
-      this.setState({ message: 'User deleted successfully.' });
-      this.setState({
-        users: this.state.users.filter(user => user.id !== userId)
-      });
-    });
-  }
-
-  const editUser = id => {
-    window.localStorage.setItem('userId', id);
-    this.props.history.push('/edit-user');
+  const handleClose = () => {
+    setOpen(false);
   };
-
-  const addUser = () => {
-    window.localStorage.removeItem('userId');
-    this.props.history.push('/add-user');
+  const saveUser = e => {
+    e.preventDefault();
+    alert('Submitted form!');
+    handleClose();
   };
-
-  if (isLoading) {
-    return <div>Loading..</div>;
-  }
 
   return (
-    <div
-      className={clsx(
-        classes.root,
-        'flex-grow flex-shrink-0 p-0 sm:p-5 print:p-0'
-      )}
-    >
+    <Fragment>
       <Animate animation={{ translateY: [0, '100%'] }} duration={600}>
-        <Card className='mx-auto w-xl print:w-full print:shadow-none'>
-          <Typography variant='h4' style={style}>
+        <TableContainer component={Paper} className={classes.container}>
+          <Typography variant='h4' style={{ textAlign: 'center' }}>
             User Details
           </Typography>
-          <Button variant='contained' color='primary' href='/add-user'>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleClickOpen}
+            style={{ float: 'left', marginLeft: '15px' }}
+          >
             Add User
           </Button>
-
-          <Table className='flex-grow flex-shrink-0 p-0 sm:p-5 print:p-0'>
+          <Table stickyHeader aria-label='sticky table'>
             <TableHead>
               <TableRow>
                 <TableCell>
@@ -125,22 +129,25 @@ const ListUserComponent = props => {
                     inputProps={{ 'aria-label': 'secondary checkbox' }}
                   />
                 </TableCell>
+                <TableCell>View</TableCell>
+                <TableCell align='left'>Edit</TableCell>
+                <TableCell align='left'>Delete</TableCell>
+                <TableCell>Avatar</TableCell>
                 <TableCell>Id</TableCell>
-                <TableCell>Username</TableCell>
-                <TableCell align='right'>Email</TableCell>
-                <TableCell align='right'>Gender</TableCell>
-                <TableCell align='right'>First Name</TableCell>
-                <TableCell align='right'>Last Name</TableCell>
-                <TableCell align='right'>Street</TableCell>
-                <TableCell align='right'>State</TableCell>
-                <TableCell align='right'>Age</TableCell>
-                <TableCell align='right'>Phone</TableCell>
+                <TableCell>name</TableCell>
+                <TableCell align='left'>LastName</TableCell>
+                <TableCell align='left'>Nickname</TableCell>
+                <TableCell align='left'>Company</TableCell>
+                <TableCell align='left'>Job Title</TableCell>
+                <TableCell align='left'>Email</TableCell>
+                <TableCell align='left'>Phone</TableCell>
+                <TableCell align='left'>Address</TableCell>
               </TableRow>
             </TableHead>
 
-            <TableBody className='flex-grow flex-shrink-0 p-0 sm:p-5 print:p-0'>
+            <TableBody>
               {users.map(row => (
-                <TableRow key={row.id.value}>
+                <TableRow key={row.id.value} hover>
                   <TableCell>
                     <Checkbox
                       value='secondary'
@@ -148,41 +155,116 @@ const ListUserComponent = props => {
                       inputProps={{ 'aria-label': 'secondary checkbox' }}
                     />
                   </TableCell>
-
-                  <TableCell component='th' scope='row'>
-                    {row.id.value}
+                  <TableCell align='left'>
+                    <Visibility cursor='pointer' />
                   </TableCell>
-                  <TableCell align='left'>{row.login.username}</TableCell>
-                  <TableCell align='left'>{row.email}</TableCell>
-                  <TableCell align='left'>{row.gender}</TableCell>
-                  <TableCell align='left'>{row.name.first}</TableCell>
-                  <TableCell align='left'>{row.name.last}</TableCell>
-                  <TableCell align='left'>{row.location.street.name}</TableCell>
-                  <TableCell align='left'>{row.location.state}</TableCell>
-                  <TableCell align='left'>{row.dob.age}</TableCell>
-                  <TableCell align='left'>{row.phone}</TableCell>
                   <TableCell align='left' onClick={() => this.editUser(row.id)}>
-                    <CreateIcon />
+                    <Create cursor='pointer' />
                   </TableCell>
                   <TableCell
                     align='right'
                     onClick={() => this.deleteUser(row.id)}
                   >
-                    <DeleteIcon />
+                    <Delete cursor='pointer' />
                   </TableCell>
+
+                  <TableCell align='left'>
+                    <Avatar src={row.avatar} alt={row.name} />
+                  </TableCell>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell align='left'>{row.name}</TableCell>
+                  <TableCell align='left'>{row.lastName}</TableCell>
+                  <TableCell align='left'>{row.nickname}</TableCell>
+                  <TableCell align='left'>{row.company}</TableCell>
+                  <TableCell align='left'>{row.jobTitle}</TableCell>
+                  <TableCell align='left'>{row.email}</TableCell>
+                  <TableCell>{row.phone}</TableCell>
+                  <TableCell>{row.address}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </Card>
+        </TableContainer>
       </Animate>
-    </div>
-  );
-};
 
-const style = {
-  display: 'flex',
-  justifyContent: 'center'
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby='form-dialog-title'
+      >
+        <DialogTitle id='form-dialog-title'>Add user</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Fill in the details below</DialogContentText>
+          <form action='/' method='POST' onSubmit={saveUser}>
+            <TextField
+              type='text'
+              placeholder='username'
+              fullWidth
+              margin='normal'
+              name='username'
+            />
+
+            <TextField
+              type='password'
+              placeholder='password'
+              fullWidth
+              margin='normal'
+              name='password'
+            />
+
+            <TextField
+              placeholder='First Name'
+              fullWidth
+              margin='normal'
+              name='firstName'
+            />
+
+            <TextField
+              placeholder='Last name'
+              fullWidth
+              margin='normal'
+              name='lastName'
+            />
+
+            <TextField
+              type='number'
+              placeholder='age'
+              fullWidth
+              margin='normal'
+              name='age'
+            />
+
+            <TextField
+              type='number'
+              placeholder='salary'
+              fullWidth
+              margin='normal'
+              name='salary'
+            />
+            <DialogActions>
+              <Button type='submit' color='primary' style={{ float: 'right' }}>
+                Save
+              </Button>
+              <Button
+                onClick={handleClose}
+                color='primary'
+                style={{ float: 'right' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleClose}
+                color='primary'
+                style={{ float: 'right' }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </Fragment>
+  );
 };
 
 export default ListUserComponent;

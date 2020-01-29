@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import { fade, makeStyles, useTheme } from '@material-ui/core/styles';
@@ -22,7 +23,9 @@ import {
   ListItemText,
   MenuList,
   MenuItem,
-  Collapse
+  Collapse,
+  Slide,
+  useScrollTrigger
 } from '@material-ui/core';
 
 import MenuIcon from '@material-ui/icons/Menu';
@@ -249,10 +252,10 @@ function Layout(props) {
     >
       <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
       <MenuItem onClick={handleMenuClose}>My account</MenuItem>
-      <MenuItem component={Link} to='/login' onClick={handleMenuClose}>
+      <MenuItem component={Link} to='/auth/login' onClick={handleMenuClose}>
         Login
       </MenuItem>
-      <MenuItem component={Link} to='/register' onClick={handleMenuClose}>
+      <MenuItem component={Link} to='/auth/register' onClick={handleMenuClose}>
         Register
       </MenuItem>
     </Menu>
@@ -319,7 +322,7 @@ function Layout(props) {
           <MenuIcon />
         </IconButton>
         <Typography variant='h6' noWrap>
-          Baetron
+          BayTron inc.
         </Typography>
         <div className={classes.search}>
           <div className={classes.searchIcon}>
@@ -388,7 +391,7 @@ function Layout(props) {
     >
       <div className={classes.toolbar}>
         <Typography variant='h6' noWrap>
-          Baetron
+          BayTron
         </Typography>
         <IconButton onClick={handleDrawerClose}>
           {theme.direction === 'rtl' ? (
@@ -592,10 +595,33 @@ function Layout(props) {
     </Drawer>
   );
 
+  function HideOnScroll(props) {
+    const { children, window } = props;
+    // Note that you normally won't need to set the window ref as useScrollTrigger
+    // will default to window.
+    // This is only being set here because the demo is in an iframe.
+    const trigger = useScrollTrigger({ target: window ? window() : undefined });
+
+    return (
+      <Slide appear={false} direction='down' in={!trigger}>
+        {children}
+      </Slide>
+    );
+  }
+
+  HideOnScroll.propTypes = {
+    children: PropTypes.element.isRequired,
+    /**
+     * Injected by the documentation to work in an iframe.
+     * You won't need it on your project.
+     */
+    window: PropTypes.func
+  };
+
   return (
     <div className={classes.root}>
       <CssBaseline />
-      {renderAppBar}
+      <HideOnScroll {...props}>{renderAppBar}</HideOnScroll>
       {renderDrawer}
       <main className={classes.content}>
         <div className={classes.toolbar} />
